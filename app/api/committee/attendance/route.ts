@@ -1,1 +1,89 @@
-import {NextResponse} from 'next/server'; import {prisma} from '@/lib/prisma'; import {getCurrentUser} from '@/lib/auth'; import {audit} from '@/lib/audit'; export async function POST(req:Request){const u=await getCurrentUser();if(!u||u.role!=='EVENT_COMMITTEE')return NextResponse.json({error:'Access denied'},{status:403});const {registrationNumber}=await req.json();const r=await prisma.registration.findUnique({where:{registrationNumber},include:{event:true,participant:true,attendance:true}});if(!r)return NextResponse.json({error:'Invalid registration'},{status:404});if(!await prisma.eventCommittee.findUnique({where:{eventId_userId:{eventId:r.eventId,userId:u.id}}}))return NextResponse.json({error:'Wrong event assignment'},{status:403});if(r.attendance||r.checkedIn)return NextResponse.json({error:'Already checked in'},{status:409});if(r.status!=='APPROVED')return NextResponse.json({error:'Registration not approved'},{status:400});const a=await prisma.attendance.create({data:{eventId:r.eventId,participantId:r.participantId,registrationId:r.id,checkedInBy:u.id}});await prisma.registration.update({where:{id:r.id},data:{checkedIn:true,checkedInAt:a.checkedInAt}});await audit(u.id,'ATTENDANCE_MARKED','Registration',r.id);return NextResponse.json({participant:r.participant,event:r.event})}}
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { audit } from "@/lib/audit";
+
+export async function POST(req: Request) {
+  const u = await getCurrentUser();
+
+  if (!u || u.role !== "EVENT_COMMITTEE") {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  const { registrationNumber } = await req.json();
+
+  const r = await prisma.registration.findUnique({
+    where: { registrationNumber },
+    include: {
+      event: true,
+      participant: true,
+      attendance: true,
+    },
+  });
+
+  if (!r) {
+    return NextResponse.json(
+      { error: "Invalid registration" },
+      { status: 404 }
+    );
+  }
+
+  const assignment = await prisma.eventCommittee.findUnique({
+    where: {
+      eventId_userId: {
+        eventId: r.eventId,
+        userId: u.id,
+      },
+    },
+  });
+
+  if (!assignment) {
+    return NextResponse.json(
+      { error: "Wrong event assignment" },
+      { status: 403 }
+    );
+  }
+
+  if (r.attendance || r.checkedIn) {
+    return NextResponse.json(
+      { error: "Already checked in" },
+      { status: 409 }
+    );
+  }
+
+  if (r.status !== "APPROVED") {
+    return NextResponse.json(
+      { error: "Registration not approved" },
+      { status: 400 }
+    );
+  }
+
+  const a = await prisma.attendance.create({
+    data: {
+      eventId: r.eventId,
+      participantId: r.participantId,
+      registrationId: r.id,
+      checkedInBy: u.id,
+    },
+  });
+
+  await prisma.registration.update({
+    where: { id: r.id },
+    data: {
+      checkedIn: true,
+      checkedInAt: a.checkedInAt,
+    },
+  });
+
+  await audit(
+    u.id,
+    "ATTENDANCE_MARKED",
+    "Registration",
+    r.id
+  );
+
+  return NextResponse.json({
+    participant: r.participant,
+    event: r.event,
+  });
+}
