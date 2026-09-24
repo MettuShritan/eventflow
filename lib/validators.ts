@@ -1,0 +1,4 @@
+import { z } from 'zod';
+export const loginSchema=z.object({email:z.string().email(),password:z.string().min(8)});
+export const registrationSchema=z.object({eventId:z.string().min(1),fullName:z.string().min(2).max(100),email:z.string().email(),phone:z.string().min(7).max(20).optional().or(z.literal('')),college:z.string().max(120).optional(),department:z.string().max(120).optional(),year:z.coerce.number().int().min(1).max(8).optional(),additionalInfo:z.string().max(1000).optional(),terms:z.literal(true)});
+export const eventSchema=z.object({title:z.string().min(3).max(150),description:z.string().min(10).max(5000),category:z.string().min(2),venue:z.string().min(2),startDate:z.string(),endDate:z.string(),registrationDeadline:z.string(),capacity:z.coerce.number().int().min(1).max(100000),registrationFee:z.coerce.number().min(0).max(1000000),eligibility:z.string().max(500).optional(),status:z.enum(['DRAFT','PUBLISHED','CANCELLED','COMPLETED']).default('DRAFT')});

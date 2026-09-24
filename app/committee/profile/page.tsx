@@ -1,0 +1,1 @@
+import {getCurrentUser} from '@/lib/auth'; import {Shell} from '@/components/ui'; export default async function P(){const u=await getCurrentUser();return <Shell role="EVENT_COMMITTEE" title="Profile"><div className="card max-w-xl p-6"><h2 className="text-xl font-bold">{u!.name}</h2><p className="mt-2 text-slate-500">{u!.email}</p></div></Shell>}

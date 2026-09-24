@@ -1,0 +1,1 @@
+import {getCurrentUser} from '@/lib/auth'; import {forbidden,redirect} from 'next/navigation'; export default async function Layout({children}:{children:React.ReactNode}){const u=await getCurrentUser();if(!u)redirect('/login');if(u.role!=='ADMIN')forbidden();return children}

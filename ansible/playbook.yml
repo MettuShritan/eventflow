@@ -1,0 +1,6 @@
+- hosts: production
+  become: true
+  roles:
+    - docker
+    - database
+    - eventflow

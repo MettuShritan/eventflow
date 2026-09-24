@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARTICIPANT
+  EVENT_COMMITTEE
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PipelineStatus {
+  SUCCESS
+  RUNNING
+  FAILED
+  PENDING
+}
+
+enum NotificationType {
+  REGISTRATION
+  APPROVED
+  REJECTED
+  REMINDER
+  UPDATE
+  CANCELLATION
+  ANNOUNCEMENT
+  SYSTEM
+  PIPELINE
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  name                  String
+  email                 String             @unique
+  passwordHash          String
+  role                  Role
+  phone                 String?
+  college               String?
+  department            String?
+  year                  Int?
+  avatar                String?
+  status                UserStatus         @default(ACTIVE)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  createdEvents         Event[]            @relation("EventCreator")
+  committeeAssignments EventCommittee[]
+  registrations         Registration[]
+  notifications         Notification[]
+  announcements         Announcement[]
+  feedback              Feedback[]
+  auditLogs             AuditLog[]
+  checkedIn             Attendance[]       @relation("CheckedInBy")
+  attendances           Attendance[]       @relation("ParticipantAttendance")
+}
+
+model Event {
+  id                   String            @id @default(cuid())
+  title                String
+  description          String
+  category             String
+  banner               String?
+  venue                String
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime
+  capacity             Int
+  registrationFee      Float             @default(0)
+  eligibility          String?
+  status               EventStatus       @default(DRAFT)
+  createdBy            String
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  creator              User              @relation("EventCreator", fields: [createdBy], references: [id])
+  committees           EventCommittee[]
+  registrations        Registration[]
+  attendance            Attendance[]
+  announcements        Announcement[]
+  feedback             Feedback[]
+}
+
+model EventCommittee {
+  id         String   @id @default(cuid())
+  eventId    String
+  userId     String
+  assignedAt DateTime @default(now())
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model Registration {
+  id                 String             @id @default(cuid())
+  registrationNumber String             @unique
+  eventId            String
+  participantId      String
+  status             RegistrationStatus @default(PENDING)
+  fullName           String
+  email              String
+  phone              String?
+  college            String?
+  department         String?
+  year               Int?
+  additionalInfo     String?
+  checkedIn          Boolean            @default(false)
+  checkedInAt        DateTime?
+  registeredAt       DateTime           @default(now())
+  event              Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participant        User               @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  attendance         Attendance?
+
+  @@unique([eventId, participantId])
+}
+
+model Attendance {
+  id             String       @id @default(cuid())
+  eventId        String
+  participantId  String
+  registrationId String       @unique
+  checkedInAt    DateTime     @default(now())
+  checkedInBy    String
+  event          Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participant    User         @relation("ParticipantAttendance", fields: [participantId], references: [id], onDelete: Cascade)
+  checker        User         @relation("CheckedInBy", fields: [checkedInBy], references: [id])
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  eventId   String
+  createdBy String
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  creator   User     @relation(fields: [createdBy], references: [id])
+}
+
+model Feedback {
+  id            String   @id @default(cuid())
+  eventId       String
+  participantId String
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  participant   User     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, participantId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  timestamp DateTime @default(now())
+  metadata  Json?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PipelineRun {
+  id           String         @id @default(cuid())
+  buildNumber  Int
+  branch       String
+  commitHash   String
+  status       PipelineStatus
+  startedAt    DateTime
+  completedAt  DateTime?
+  stages       PipelineStage[]
+}
+
+model PipelineStage {
+  id           String         @id @default(cuid())
+  pipelineRunId String
+  name         String
+  status       PipelineStatus
+  duration     Int?
+  startedAt    DateTime
+  completedAt  DateTime?
+  pipelineRun  PipelineRun    @relation(fields: [pipelineRunId], references: [id], onDelete: Cascade)
+}

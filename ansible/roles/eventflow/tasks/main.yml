@@ -1,0 +1,8 @@
+- name: Create EventFlow directory
+  file: { path: /opt/eventflow, state: directory, mode: '0755' }
+- name: Copy deployment compose file
+  copy: { src: "{{ playbook_dir }}/docker-compose.yml", dest: /opt/eventflow/docker-compose.yml }
+- name: Start EventFlow
+  shell: docker compose -f /opt/eventflow/docker-compose.yml up -d --build
+- name: Verify application container
+  shell: docker compose -f /opt/eventflow/docker-compose.yml ps

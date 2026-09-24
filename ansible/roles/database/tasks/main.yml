@@ -1,0 +1,6 @@
+- name: Create EventFlow directory
+  file: { path: /opt/eventflow, state: directory, mode: '0755' }
+- name: Database configuration placeholder
+  copy:
+    dest: /opt/eventflow/README-db.txt
+    content: 'PostgreSQL is provisioned by docker-compose.yml. Use a secret manager for production credentials.'

@@ -1,0 +1,1 @@
+import QRCode from 'qrcode'; export default async function QR({value}:{value:string}){const src=await QRCode.toDataURL(value,{width:128,margin:1});return <img src={src} alt="Registration QR" className="h-32 w-32 rounded-lg border p-1"/>}
