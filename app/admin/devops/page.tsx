@@ -1,1 +1,148 @@
-import {prisma} from '@/lib/prisma'; import {Shell,Badge} from '@/components/ui'; const stages=['GitHub','Jenkins','Build','Unit Tests','Selenium Tests','Security Validation','Docker Build','Docker Test','Ansible Deployment','Production']; export default async function D(){const run=await prisma.pipelineRun.findFirst({include:{stages:true},orderBy:{startedAt:'desc'}});return <Shell role="ADMIN" title="DevOps control center"><div className="rounded-2xl bg-slate-950 p-6 text-white"><p className="text-xs font-bold uppercase tracking-widest text-indigo-300">ADMIN ONLY</p><h2 className="mt-2 text-2xl font-black">CI/CD Pipeline</h2><div className="mt-7 flex flex-wrap gap-2">{stages.map(s=><div key={s} className="rounded-xl border border-slate-700 px-3 py-2 text-xs">{s}</div>)}</div></div><div className="mt-6 grid gap-4 md:grid-cols-4"><Info a="Build" b={run?`#${run.buildNumber}`:'—'}/><Info a="Branch" b={run?.branch||'—'}/><Info a="Commit" b={run?.commitHash||'—'}/><Info a="Status" b={run?.status||'PENDING'}/></div><div className="card mt-6 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b bg-slate-50"><th className="p-4">Stage</th><th className="p-4">Status</th><th className="p-4">Duration</th></tr></thead><tbody>{run?.stages.map(s=><tr className="border-b" key={s.id}><td className="p-4 font-semibold">{s.name}</td><td className="p-4"><Badge tone={s.status==='SUCCESS'?'green':s.status==='FAILED'?'red':'amber'}>{s.status}</Badge></td><td className="p-4">{s.duration||0}s</td></tr>)}</tbody></table></div><p className="mt-4 text-xs text-slate-400">Secrets and credentials are never displayed. This route is protected by the ADMIN role layout and its APIs are separately authorized.</p></Shell>} function Info({a,b}:{a:string;b:string}){return <div className="card p-5"><p className="text-xs text-slate-400">{a}</p><p className="mt-1 font-bold">{b}</p></div>}
+import { prisma } from "@/lib/prisma";
+import { Shell, Badge } from "@/components/ui";
+
+const stages = [
+  "GitHub",
+  "Jenkins",
+  "Build",
+  "Unit Tests",
+  "Selenium Tests",
+  "Security Validation",
+  "Docker Build",
+  "Docker Test",
+  "Ansible Deployment",
+  "Production",
+];
+
+export default async function D() {
+  const run = await prisma.pipelineRun.findFirst({
+    include: { stages: true },
+    orderBy: { startedAt: "desc" },
+  });
+
+  return (
+    <Shell role="ADMIN" title="DevOps control center">
+      {/* CI/CD Pipeline Header - intentionally dark */}
+      <div className="rounded-2xl bg-slate-950 p-6 text-white">
+        <p className="text-xs font-bold uppercase tracking-widest text-indigo-300">
+          ADMIN ONLY
+        </p>
+
+        <h2 className="mt-2 text-2xl font-black">
+          CI/CD Pipeline
+        </h2>
+
+        <div className="mt-7 flex flex-wrap gap-2">
+          {stages.map((s) => (
+            <div
+              key={s}
+              className="rounded-xl border border-slate-700 px-3 py-2 text-xs"
+            >
+              {s}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pipeline Information */}
+      <div className="mt-6 grid gap-4 md:grid-cols-4">
+        <Info
+          a="Build"
+          b={run ? `#${run.buildNumber}` : "—"}
+        />
+
+        <Info
+          a="Branch"
+          b={run?.branch || "—"}
+        />
+
+        <Info
+          a="Commit"
+          b={run?.commitHash || "—"}
+        />
+
+        <Info
+          a="Status"
+          b={run?.status || "PENDING"}
+        />
+      </div>
+
+      {/* Pipeline Stages */}
+      <div className="card mt-6 overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+              <th className="p-4 text-slate-700 dark:text-slate-300">
+                Stage
+              </th>
+
+              <th className="p-4 text-slate-700 dark:text-slate-300">
+                Status
+              </th>
+
+              <th className="p-4 text-slate-700 dark:text-slate-300">
+                Duration
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {run?.stages.map((s) => (
+              <tr
+                className="border-b border-slate-200 dark:border-slate-700"
+                key={s.id}
+              >
+                <td className="p-4 font-semibold text-slate-900 dark:text-slate-100">
+                  {s.name}
+                </td>
+
+                <td className="p-4">
+                  <Badge
+                    tone={
+                      s.status === "SUCCESS"
+                        ? "green"
+                        : s.status === "FAILED"
+                          ? "red"
+                          : "amber"
+                    }
+                  >
+                    {s.status}
+                  </Badge>
+                </td>
+
+                <td className="p-4 text-slate-700 dark:text-slate-300">
+                  {s.duration || 0}s
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-4 text-xs text-slate-400">
+        Secrets and credentials are never displayed. This route is protected
+        by the ADMIN role layout and its APIs are separately authorized.
+      </p>
+    </Shell>
+  );
+}
+
+function Info({
+  a,
+  b,
+}: {
+  a: string;
+  b: string;
+}) {
+  return (
+    <div className="card p-5">
+      <p className="text-xs text-slate-400">
+        {a}
+      </p>
+
+      <p className="mt-1 font-bold text-slate-900 dark:text-slate-100">
+        {b}
+      </p>
+    </div>
+  );
+}
