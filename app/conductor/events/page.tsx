@@ -1,0 +1,6 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {Page,Button} from '@/components/ui';
+import RoleGuard from '@/components/RoleGuard';
+import type {Event} from '@/types';
+export default function ConductorEvents(){const [events,setEvents]=useState<Event[]>([]);useEffect(()=>{fetch('/api/conductor/events',{cache:'no-store'}).then(r=>r.json()).then(setEvents)},[]);return <RoleGuard role="event-conductor"><Page><p className="text-sm text-indigo-300">Event Conductor</p><h1 className="mt-1 text-4xl font-black">My Events</h1><p className="mt-2 text-slate-400">Only events assigned to this conductor are visible here.</p>{events.length?<div className="mt-8 space-y-3">{events.map(e=><div key={e.id} className="glass rounded-2xl p-5 flex items-center justify-between gap-4"><div><h3 className="font-bold">{e.title}</h3><p className="mt-1 text-sm text-slate-500">{new Date(e.date).toLocaleDateString('en-IN')} · {e.registered}/{e.seats} participants</p></div><Button href={`/conductor/events/${e.id}`}>Manage Event</Button></div>)}</div>:<div className="mt-8 rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-500">No assigned events yet.</div>}</Page></RoleGuard>}

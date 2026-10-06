@@ -1,0 +1,20 @@
+- name: Deploy EventFlow
+  hosts: eventflow
+  become: true
+  tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.package:
+        name: docker.io
+        state: present
+    - name: Pull EventFlow image
+      community.docker.docker_image:
+        name: eventflow:latest
+        source: pull
+    - name: Run EventFlow
+      community.docker.docker_container:
+        name: eventflow
+        image: eventflow:latest
+        state: started
+        restart_policy: unless-stopped
+        published_ports:
+          - "3000:3000"

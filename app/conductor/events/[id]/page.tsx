@@ -1,0 +1,8 @@
+'use client';
+import { useEffect,useState } from 'react';
+import { useParams } from 'next/navigation';
+import { Page,Button,Badge } from '@/components/ui';
+import RoleGuard from '@/components/RoleGuard';
+import type { Event } from '@/types';
+export default function ConductorEvent(){return <RoleGuard role="event-conductor"><Inner/></RoleGuard>}
+function Inner(){const {id}=useParams<{id:string}>();const [event,setEvent]=useState<Event|null>(null);useEffect(()=>{fetch('/api/conductor/events',{cache:'no-store'}).then(r=>r.json()).then((rows:Event[])=>setEvent(rows.find(x=>x.id===id)||null))},[id]);if(!event)return <Page><div className="py-16 text-center text-slate-500">Loading event or event not assigned...</div></Page>;return <Page><Badge>{event.category}</Badge><h1 className="mt-3 text-4xl font-black">{event.title}</h1><p className="mt-3 max-w-3xl text-slate-400">{event.description}</p><div className="mt-8 grid md:grid-cols-3 gap-4"><div className="glass rounded-2xl p-5"><div className="text-sm text-slate-500">Registrations</div><div className="mt-2 text-3xl font-black">{event.registered}</div></div><div className="glass rounded-2xl p-5"><div className="text-sm text-slate-500">Capacity</div><div className="mt-2 text-3xl font-black">{event.seats}</div></div><div className="glass rounded-2xl p-5"><div className="text-sm text-slate-500">Deadline</div><div className="mt-2 text-xl font-bold">{new Date(event.deadline).toLocaleDateString('en-IN')}</div></div></div><div className="mt-8 flex flex-wrap gap-3"><Button href="/conductor/registrations">View Registrations</Button><Button href="/conductor/attendance" variant="secondary">Open Attendance</Button></div></Page>}
